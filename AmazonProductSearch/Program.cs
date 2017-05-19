@@ -14,7 +14,7 @@ namespace AmazonProductSearch
         {
             var host = new WebHostBuilder()
                 .UseKestrel()
-                .UseUrls("http://127.0.0.1:5000")
+                .UseUrls("http://127.0.0.1:3030")
                 .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseIISIntegration()
                 .UseStartup<Startup>()
