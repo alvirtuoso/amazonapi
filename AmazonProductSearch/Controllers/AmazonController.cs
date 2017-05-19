@@ -13,9 +13,9 @@ namespace AmazonProductSearch.Controllers
     [Route("api/[controller]")]
     public class AmazonController : Controller
     {
-        private const string MY_AWS_ACCESS_KEY_ID = "AKIAJMJ3Q4UQJSG6WOIA";
-        private const string MY_AWS_SECRET_KEY = "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";
-        private const string MY_ASSOCIATE_ID = "alvirtuoso-20";
+        private const string MY_AWS_ACCESS_KEY_ID = "";
+        private const string MY_AWS_SECRET_KEY = "";
+        private const string MY_ASSOCIATE_ID = "";
         private const string DESTINATION = "webservices.amazon.com"; //"ecs.amazonaws.com";
 
         private const string NAMESPACE = "http://webservices.amazon.com/AWSECommerceService/";
