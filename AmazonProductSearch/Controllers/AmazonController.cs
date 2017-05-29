@@ -1,27 +1,44 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Net.Http;
+//using Microsoft.Extensions.Configuration;
+//using Microsoft.Extensions.Configuration.EnvironmentVariables;
 using System.Xml;
 using Microsoft.AspNetCore.Mvc;
 using AmazonProductSearch.Models;
 using AmazonProductSearch.Helpers;
-using System.Threading.Tasks;
+//using Nager.AmazonProductAdvertising;
 
 namespace AmazonProductSearch.Controllers
 {
     [Route("api/[controller]")]
     public class AmazonController : Controller
     {
-        private const string MY_AWS_ACCESS_KEY_ID = "";
-        private const string MY_AWS_SECRET_KEY = "";
-        private const string MY_ASSOCIATE_ID = "";
-        private const string DESTINATION = "webservices.amazon.com"; //"ecs.amazonaws.com";
+		private const string MY_AWS_ACCESS_KEY_ID = "AKIAJMJ3Q4UQJSG6WOIA";
+		private const string MY_AWS_SECRET_KEY = "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";
+		private const string MY_ASSOCIATE_ID = "alvirtuoso-20";
 
+        private const string DESTINATION = "webservices.amazon.com"; //"ecs.amazonaws.com";
         private const string NAMESPACE = "http://webservices.amazon.com/AWSECommerceService/";
         private const string ITEM_ID = "B00URGA106"; // testing 
+        private string AKEY = Environment.GetEnvironmentVariable("ACCESS_KEY");
+        private string SKEY = Environment.GetEnvironmentVariable("SECRET_KEY");
 
         SignedRequestHelper signHelper = new SignedRequestHelper(MY_AWS_ACCESS_KEY_ID, MY_AWS_SECRET_KEY, DESTINATION);
+
+
+        private const string AssociateTag = "alvirtuoso-20";
+		//private AmazonAuthentication GetConfig()
+		//{
+		//	var accessKey = Environment.GetEnvironmentVariable("ACCESS_KEY");
+		//	var secretKey = Environment.GetEnvironmentVariable("SECRET_KEY");
+
+		//	var authentication = new AmazonAuthentication();
+		//	authentication.AccessKey = accessKey;
+		//	authentication.SecretKey = secretKey;
+
+		//	return authentication;
+		//}
 
         /// <summary>
         /// Get request for Averages the stars. api/amazon/reviews/stringdata
@@ -41,9 +58,30 @@ namespace AmazonProductSearch.Controllers
                 // TODO: Add logging.
                 result.Value = "Server Error";
             }
-
+            //var n = new Nager.AmazonProductAdvertising.Operation.AmazonItemSearchOperation().
             return result;
         }
+
+  //      [HttpGet("search/{key}")]
+		//public ActionResult Search(string key)
+		//{
+		//	if (string.IsNullOrEmpty(key))
+		//	{
+		//		//return View();
+		//		return null;
+		//	}
+
+
+		//	var authentication = this.GetConfig();
+
+		//	var wrapper = new AmazonWrapper(authentication, AmazonEndpoint.US, AssociateTag);
+		//	var responseGroup = Nager.AmazonProductAdvertising.Model.AmazonResponseGroup.ItemAttributes | Nager.AmazonProductAdvertising.Model.AmazonResponseGroup.Images;
+
+		//	var result = wrapper.Search(key.Trim(), Nager.AmazonProductAdvertising.Model.AmazonSearchIndex.All, responseGroup);
+
+		//	//return View(result);
+		//	return new JsonResult(result);
+		//}
 
 		///<summary>
 		/// GET api/amazon/items/stringsearchword/2 
@@ -72,11 +110,16 @@ namespace AmazonProductSearch.Controllers
                    for (int i = 0; i < itemList.Count; i++)
                     {
                         Item item = new Item();
+
+                        // Get the offers xml tag
+                        var offersNode = HtmlHelper.FindNode("Offers", itemList[i]);
+
                         // Get the <ItemAttributes> node of an <Item>                               <Item>
                         var attributeNode = HtmlHelper.FindNode("ItemAttributes", itemList[i]);  //  <ItemAttributes>
                         var titleNode = HtmlHelper.FindNode("Title", attributeNode);             //       <Title>
 
-                        // Some items does not have listed price.(ex. item with EAN# 0886424573142) 
+                        // Some items does not have listed price.(ex. item with EAN# 0886424573142)
+                        // ** List Price is not always the displayed one, but the price under <Offers> xml tag. **
                         var priceNode = HtmlHelper.FindNode("ListPrice", attributeNode);           //     <ListPrice>
                         var itemLinkNode = HtmlHelper.FindNode("DetailPageURL", itemList[i]);
                         var asinNode = HtmlHelper.FindNode("ASIN", itemList[i]);       
@@ -92,18 +135,27 @@ namespace AmazonProductSearch.Controllers
                         var lgImgUrlNode = (lgImgNode != null) ? HtmlHelper.FindNode("URL", lgImgNode): null;                        // <URL> someurl </URL>
                         var reviewsNode = HtmlHelper.FindNode("CustomerReviews", itemList[i]);                                 //   <ReviewsNode>
                         var reviewUrlNode = (reviewsNode != null) ? HtmlHelper.FindNode("IFrameURL", reviewsNode) : null;       //  <IFrameUrl></IFrameURL/>
-                        item.Title = titleNode.InnerText;                                                                        // </ReviewsNode>
-                        item.Price = (formattedPriceNode != null) ? formattedPriceNode.InnerText : string.Empty;
+
+                        var currencySign = "";
+						item.Title = titleNode.InnerText;                                                                       
+						item.DisplayedPrice = HtmlHelper.FindDisplayedPrice(offersNode);
+                        item.Price = HtmlHelper.FindPrice(formattedPriceNode, out currencySign);
+                        item.CurrencySign = currencySign;
                         item.UrlItemLink = (itemLinkNode != null) ? itemLinkNode.InnerText : string.Empty;
                         item.UrlMediumImage = (medImgUrlNode != null) ? medImgUrlNode.InnerText : string.Empty;
                         item.UrlReview = (reviewUrlNode != null) ? reviewUrlNode.InnerText : string.Empty;
-                        item.UrlLargeImage = (lgImgUrlNode != null) ? lgImgUrlNode.InnerText : string.Empty;
+
                         item.StarLabel = "";// HtmlHelper.GetStarReview(item.UrlReview, out aveStars);
                         item.AverageStars = aveStars;
                         item.ID = Guid.NewGuid();
                         item.Asin = (asinNode != null) ? asinNode.InnerText : string.Empty;
                         item.IsPrimeEligible = HtmlHelper.IsPrimeEligible(isPrimeEligibleNode);
                         item.Features = HtmlHelper.ItemFeatures(attributeNode);
+
+                        // Get Large Image
+                        var imgSetsNode = HtmlHelper.FindNode("ImageSets", itemList[i]);
+                        item.UrlLargeImage = (imgSetsNode != null) ? HtmlHelper.GetLargeImgLink(imgSetsNode.ChildNodes) : string.Empty;
+
                         items.Add(item);
     
                     }
@@ -155,6 +207,9 @@ namespace AmazonProductSearch.Controllers
                         var itemNode = itemNodeList[0];
                         Item item = new Item();
 
+						// Get the <Offers> node
+                        var offersNode = HtmlHelper.FindNode("Offers", itemNode);
+
                         // Get the <ItemAttributes> node of an <Item>                              
                         var attributeNode = HtmlHelper.FindNode("ItemAttributes", itemNode);  //  <ItemAttributes>
                         var titleNode = HtmlHelper.FindNode("Title", attributeNode);             //       <Title>
@@ -175,8 +230,13 @@ namespace AmazonProductSearch.Controllers
                         var lgImgUrlNode = (lgImgNode != null) ? HtmlHelper.FindNode("URL", lgImgNode) : null;                        // <URL> someurl </URL>
                         var reviewsNode = HtmlHelper.FindNode("CustomerReviews", itemNode);                                 //   <ReviewsNode>
                         var reviewUrlNode = (reviewsNode != null) ? HtmlHelper.FindNode("IFrameURL", reviewsNode) : null;       //  <IFrameUrl></IFrameURL/>
+
+                        var currencySign = "";
+
                         item.Title = titleNode.InnerText;                                                                        // </ReviewsNode>
-                        item.Price = (formattedPriceNode != null) ? formattedPriceNode.InnerText : string.Empty;
+						item.DisplayedPrice = HtmlHelper.FindDisplayedPrice(offersNode);
+                        item.Price = HtmlHelper.FindPrice(formattedPriceNode, out currencySign);
+                        item.CurrencySign = currencySign;
                         item.UrlItemLink = (itemLinkNode != null) ? itemLinkNode.InnerText : string.Empty;
                         item.UrlSmallImage = (smallImgUrlNode != null) ? smallImgUrlNode.InnerText : string.Empty;
                         item.UrlMediumImage = (medImgUrlNode != null) ? medImgUrlNode.InnerText : string.Empty;
@@ -250,11 +310,11 @@ namespace AmazonProductSearch.Controllers
 		}
 
         // GET api/amazon/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value test Get ID";
-        }
+        //[HttpGet("{id}")]
+        //public string Get(int id)
+        //{
+        //    return "value test Get ID";
+        //}
 
   
     }

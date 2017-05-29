@@ -30,7 +30,7 @@ namespace AmazonProductSearch.Helpers
         }
 
 		/// <summary>
-		/// Finds the XmlNode from it's parent node specified by it's name.
+		/// Finds the XmlNode from it's direct parent node specified by it's name.
 		/// </summary>
 		/// <returns>The node.</returns>
 		/// <param name="nodeName">Node name.</param>
@@ -50,6 +50,57 @@ namespace AmazonProductSearch.Helpers
 			return n;
 		}
 
+		/// <summary>
+		/// Finds the displayed price.
+		/// </summary>
+		/// <returns>The displayed price.</returns>
+		/// <param name="offersNode">Offers node.</param>
+		/// <param name="currency">Currency.</param>
+		public static float FindDisplayedPrice(XmlNode offersNode)
+		{
+            float n = 0;
+			var nodes = offersNode.ChildNodes;
+			for (int i = 0; i < nodes.Count; i++)
+			{
+                if (nodes[i].Name == "Offer")
+                {
+                    var ol = HtmlHelper.FindNode("OfferListing", nodes[i]);
+                    if (ol != null && ol.HasChildNodes){
+                        var priceNode = HtmlHelper.FindNode("Price", ol);
+                        if(priceNode != null){
+                            // Remove the currency sign first then parse to float
+                            float.TryParse(HtmlHelper.FindNode("FormattedPrice", priceNode).InnerText.Remove(0, 1), out n);
+                        }
+                    }
+					break;
+				}
+			}
+			return n;
+		}
+
+        /// <summary>
+        /// Finds the price.
+        /// </summary>
+        /// <returns>The price.</returns>
+        /// <param name="node">Node.</param>
+        public static float FindPrice(XmlNode node, out string currency)
+		{
+			float n = 0;
+            currency = "";
+            if (node != null)
+            {
+                currency = node.InnerText[0].ToString();
+                // Remove the "$" sign first then try parse to float type
+                float.TryParse(node.InnerText.Remove(0, 1), out n);
+            }
+            return n;
+		}
+
+        /// <summary>
+        /// Items the features.
+        /// </summary>
+        /// <returns>The features.</returns>
+        /// <param name="attributesNode">Attributes node.</param>
         public static List<String> ItemFeatures(XmlNode attributesNode)
 		{
             List<String> features = new List<string>();
@@ -90,6 +141,30 @@ namespace AmazonProductSearch.Helpers
 
             return images;
         }
+
+        /// <summary>
+        /// Gets the large image link.
+        /// </summary>
+        /// <returns>The large image link.</returns>
+        /// <param name="imageSetsNode">Image sets node.</param>
+        public static string GetLargeImgLink(XmlNodeList imageSetsNode)
+		{
+            string result = string.Empty;
+			if (imageSetsNode.Count > 0)
+			{
+				for (int i = 0; i < imageSetsNode.Count; i++)
+				{
+					var imageSetNode = HtmlHelper.FindNode("ImageSet", imageSetsNode[i]);
+					var largeImageNode = HtmlHelper.FindNode("LargeImage", imageSetsNode[i]);
+					var largeUrlImageNode = (largeImageNode != null) ? HtmlHelper.FindNode("URL", largeImageNode) : null;
+
+					result = largeUrlImageNode.InnerText;
+
+				}
+			}
+
+            return result;
+		}
 
 		public static List<String> GetFeatures(XmlNodeList featureNodes)
 		{
