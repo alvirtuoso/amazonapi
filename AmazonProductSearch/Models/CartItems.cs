@@ -5,7 +5,7 @@ namespace AmazonProductSearch.Models
     public class CartItems
     {
         public Price SubTotal { get; set; }
-        public CartItem CartItem { get; set; }
+        public CartItems CartItem { get; set; }
       
     }
 }
