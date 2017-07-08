@@ -30,7 +30,7 @@ using System.Xml;
 
 namespace AmazonProductSearch.Helpers
 {
-    class SignedRequestHelper
+    internal class SignedRequestHelper: IDisposable
     {
         private string endPoint;
         private string akid;
@@ -58,6 +58,10 @@ namespace AmazonProductSearch.Helpers
             this.akid = awsAccessKeyId;
             this.secret = Encoding.UTF8.GetBytes(awsSecretKey);
             this.signer = new HMACSHA256(this.secret);
+        }
+
+        public SignedRequestHelper(){
+            
         }
 
         /*
@@ -235,6 +239,16 @@ namespace AmazonProductSearch.Helpers
             string canonicalString = builder.ToString();
             canonicalString = canonicalString.Substring(0, canonicalString.Length - 1);
             return canonicalString;
+        }
+
+        public void Dispose()
+        {
+			if (this.signer == null)
+			{
+				return;
+			}
+
+			this.signer.Dispose();
         }
     }
 

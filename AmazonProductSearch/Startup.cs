@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Firebase.Auth.Unofficial.Mvc;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -27,21 +28,26 @@ namespace AmazonProductSearch
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-			// Add service and create Policy with options
-			services.AddCors(options =>
-			{
-				options.AddPolicy("CorsPolicy",
-					builder => builder.AllowAnyOrigin()
-					.AllowAnyMethod()
-					.AllowAnyHeader()
-					.AllowCredentials());
-			});
-			//// do some other work
-			services.AddOptions();
 
-			// Add the MVC feature
-			services.AddMvcCore()
-					.AddJsonFormatters();
+            // Add service and create Policy with options
+            services.AddCors(options =>
+            {
+                options.AddPolicy("CorsPolicy",
+                    builder => builder.AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials());
+            });
+            //// do some other work
+            services.AddOptions();
+
+            // Add the MVC feature
+            services.AddMvcCore()
+                    .AddJsonFormatters();
+            
+			// Use firebase authentication. In controllers, add attribute header [Authorize(Policy = "Firebase")]
+            // Uncomment when requiring user's auhentication.
+			//services.AddFirebaseAuthorization("my api key");
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -53,8 +59,8 @@ namespace AmazonProductSearch
 			{
 				app.UseDeveloperExceptionPage();
 			}
-
-            app.UseCors("CorsPolicy");
+   
+			app.UseCors("CorsPolicy");
             app.UseMvc();
         }
     }

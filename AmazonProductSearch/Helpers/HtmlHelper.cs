@@ -11,6 +11,7 @@ using MailKit.Net.Smtp;
 //using HtmlAgilityPack;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace AmazonProductSearch.Helpers
 {
@@ -27,6 +28,36 @@ namespace AmazonProductSearch.Helpers
                 }
             }
             return result;
+        }
+
+        public static String OfferLisID(XmlNodeList offerListId)
+		{
+            var result = string.Empty;
+			if (offerListId != null && offerListId.Count > 0)
+			{
+                result = offerListId[0].InnerText;
+
+			}
+			return result;
+		}
+
+        public static String VisitorCountry(string url)
+		{
+            Location loc = new Location();
+            loc.Country_Code = "US"; // Default
+            WebRequest request = WebRequest.Create(url);
+			WebResponse response = request.GetResponseAsync().Result;
+            using(StreamReader reader = new StreamReader(response.GetResponseStream())){
+                  loc = JsonConvert.DeserializeObject<Location>(reader.ReadToEnd());
+            }
+
+            return loc.Country_Code;
+		}
+
+        public static String EndPointUrl(){
+			var countryCode = HtmlHelper.VisitorCountry("http://freegeoip.net/json/");
+			var domain = AmazonDomain.GetDomain(countryCode);
+			return $"webservices.{domain}";
         }
 
 		/// <summary>
@@ -50,12 +81,29 @@ namespace AmazonProductSearch.Helpers
 			return n;
 		}
 
+        public static float LowestPrice(XmlNode offersSummaryNode){
+			float n = 0;
+			var nodes = offersSummaryNode.ChildNodes;
+			for (int i = 0; i < nodes.Count; i++)
+			{
+				if (nodes[i].Name == "LowestNewPrice")
+				{
+					var fp = HtmlHelper.FindNode("FormattedPrice", nodes[i]);
+					if (fp != null)
+					{
+							// Remove the currency sign first then parse to float
+							float.TryParse(fp.InnerText.Remove(0, 1), out n);
+					}
+					break;
+				}
+			}
+			return n;
+        }
 		/// <summary>
 		/// Finds the displayed price.
 		/// </summary>
 		/// <returns>The displayed price.</returns>
 		/// <param name="offersNode">Offers node.</param>
-		/// <param name="currency">Currency.</param>
 		public static float FindDisplayedPrice(XmlNode offersNode)
 		{
             float n = 0;
@@ -76,6 +124,35 @@ namespace AmazonProductSearch.Helpers
 				}
 			}
 			return n;
+		}
+
+        /// <summary>
+        /// Finds the offer listing identifier.
+        /// </summary>
+        /// <returns>The offer listing identifier.</returns>
+        /// <param name="offersNode">Offers node.</param>
+		public static string FindOfferListingID(XmlNode offersNode)
+		{
+            string result = "";
+			var nodes = offersNode.ChildNodes;
+			for (int i = 0; i < nodes.Count; i++)
+			{
+				if (nodes[i].Name == "Offer")
+				{
+					var ol = HtmlHelper.FindNode("OfferListing", nodes[i]);
+					if (ol != null && ol.HasChildNodes)
+					{
+                        var offerLIstingId = HtmlHelper.FindNode("OfferListingId", ol);
+						if (offerLIstingId != null)
+						{
+                            // Get the text
+                            result = offerLIstingId.InnerText;
+						}
+					}
+					break;
+				}
+			}
+            return result;
 		}
 
         /// <summary>

@@ -10,6 +10,7 @@ namespace AmazonProductSearch.Models
     {
         private Guid id;
         private string asin;
+        private string offerListingId;
         private string title;
         private float price;
         private float displayedPrice;
@@ -21,17 +22,20 @@ namespace AmazonProductSearch.Models
         private string urlLargeImage;
         private string starLabel;
         private float averageStars;
+        private float lowestPrice;
         private bool isPrimeEligible;
         private List<ItemImage> itemImages;
         private List<String> features;
 
         public Item(){}
-        public Item(Guid Id, string asin, string title, float price, float displayedPrice, string currencySign, string UrlItemLink, string urlReview, string urlSmallImage, string urlMediumImage, string urlLargeImage, string stars, bool isPrimeEligible, List<ItemImage> itemImages, List<String> features)
+        public Item(Guid Id, string asin,string offerListingId, string title, float price, float lowestPrice, float displayedPrice, string currencySign, string UrlItemLink, string urlReview, string urlSmallImage, string urlMediumImage, string urlLargeImage, string stars, bool isPrimeEligible, List<ItemImage> itemImages, List<String> features)
         {
             this.id = Id;
             this.asin = asin;
+            this.offerListingId = offerListingId;
             this.title = title;
             this.price = price;
+            this.lowestPrice = lowestPrice;
             this.displayedPrice = displayedPrice;
             this.currencySign = currencySign;
             this.urlItemLink = UrlItemLink;
@@ -52,6 +56,11 @@ namespace AmazonProductSearch.Models
             set { this.id = value; }
         }
 
+        public String OfferListingId{
+            get { return this.offerListingId; }
+            set { this.offerListingId = value; }
+        }
+
         public string Asin
         {
             get { return this.asin; }
@@ -68,6 +77,12 @@ namespace AmazonProductSearch.Models
             get { return this.price; }
             set { this.price = value; }
         }
+
+		public float LowestPrice
+		{
+            get { return this.lowestPrice; }
+            set { this.lowestPrice = value; }
+		}
 
         public float DisplayedPrice
         {
