@@ -205,7 +205,7 @@ public class AmazonController : Controller
         {
             var m = ex.Message;
             // TODO: Add logging.
-            result = new JsonResult("Server error");
+            result = new JsonResult(m);
         }
 
         return result;
