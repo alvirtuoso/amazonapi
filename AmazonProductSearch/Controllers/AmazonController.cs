@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -142,7 +142,7 @@ public class AmazonController : Controller
                     Item item = new Item();
 
                     // Get the offers xml tag
-                    var offersNode = HtmlHelper.FindNode("Offers", itemList[i]);
+                    var offersNode = HtmlHelper.FindNode("Offers", itemList[i]); 
 
                     // Get the <ItemAttributes> node of an <Item>                               <Item>
                     var attributeNode = HtmlHelper.FindNode("ItemAttributes", itemList[i]);  //  <ItemAttributes>
